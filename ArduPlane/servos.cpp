@@ -776,19 +776,49 @@ void Plane::servos_twin_engine_mix(void)
     }
 #endif
 
+    // Determine left and right throttle values
     float throttle_left, throttle_right;
 
-    if (throttle < 0 && have_reverse_thrust() && allow_reverse_thrust()) {
-        // doing reverse thrust
-        throttle_left  = constrain_float(throttle + 50 * rudder_dt, -100, 0);
-        throttle_right = constrain_float(throttle - 50 * rudder_dt, -100, 0);
-    } else if (throttle <= 0) {
-        throttle_left  = throttle_right = 0;
-    } else {
-        // doing forward thrust
-        throttle_left  = constrain_float(throttle + 50 * rudder_dt, 0, 100);
-        throttle_right = constrain_float(throttle - 50 * rudder_dt, 0, 100);
+    switch (control_mode->mode_number()) {
+        case Mode::Number::MANUAL:{ // Manual flight mode
+            float throttle_rescaled =  (throttle + 100) / 200 * 100; // rescale throttle from (-100,100) to (0,100) so stick at idle is 0 thrust.
+            float taxi_mode_switch = hal.rcin->read(5);
+            float reverse_mode_switch = hal.rcin->read(4);
+
+            if (taxi_mode_switch > 1500){  // Taxi Mode
+                if (reverse_mode_switch > 1500){ // Taxi forward
+                    throttle_left  = constrain_float(throttle_rescaled + 50 * rudder_dt, -100, 100);
+                    throttle_right = constrain_float(throttle_rescaled - 50 * rudder_dt, -100, 100);
+                } else { // Taxi backwards
+                    throttle_left  = constrain_float(-(throttle_rescaled + 50 * rudder_dt), -100, 100);
+                    throttle_right = constrain_float(-(throttle_rescaled - 50 * rudder_dt), -100, 100);
+                }
+            } else { // Flight Mode
+                throttle_left  = constrain_float(throttle_rescaled + 50 * rudder_dt, 0, 100);
+                throttle_right = constrain_float(throttle_rescaled - 50 * rudder_dt, 0, 100);
+            }
+        }
+        break;
+
+        default: // All other modes
+            throttle_left  = constrain_float(throttle + 50 * rudder_dt, 0, 100);
+            throttle_right = constrain_float(throttle - 50 * rudder_dt, 0, 100);
+        
     }
+    
+    // // Original code
+    // if (throttle < 0 && have_reverse_thrust() && allow_reverse_thrust()) {
+    //     // doing reverse thrust
+    //     throttle_left  = constrain_float(throttle + 50 * rudder_dt, -100, 0);
+    //     throttle_right = constrain_float(throttle - 50 * rudder_dt, -100, 0);
+    // } else if (throttle <= 0) {
+    //     throttle_left  = throttle_right = 0;
+    // } else {
+    //     // doing forward thrust
+    //     throttle_left  = constrain_float(throttle + 50 * rudder_dt, 0, 100);
+    //     throttle_right = constrain_float(throttle - 50 * rudder_dt, 0, 100);
+    // }
+
     if (!arming.is_armed_and_safety_off()) {
         if (arming.arming_required() == AP_Arming::Required::YES_ZERO_PWM) {
             SRV_Channels::set_output_limit(SRV_Channel::k_throttleLeft, SRV_Channel::Limit::ZERO_PWM);
