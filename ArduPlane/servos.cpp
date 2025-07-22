@@ -766,8 +766,15 @@ void Plane::set_servos_flaps(void)
 void Plane::servos_twin_engine_mix(void)
 {
     float throttle = SRV_Channels::get_output_scaled(SRV_Channel::k_throttle);
+
+    // Rudder delta throttle
     float rud_gain = float(plane.g2.rudd_dt_gain) * 0.01f;
     rudder_dt = rud_gain * SRV_Channels::get_output_scaled(SRV_Channel::k_rudder) / SERVO_MAX;
+
+    // Rudder taxi mode delta throttle 
+    float rud_gain_taxi = float(plane.g2.rudd_dt_gain_taxi) * 0.01f;
+    float rudder_dt_taxi = rud_gain_taxi * SRV_Channels::get_output_scaled(SRV_Channel::k_rudder) / SERVO_MAX;
+
 
 #if AP_ADVANCEDFAILSAFE_ENABLED
     if (afs.should_crash_vehicle()) {
@@ -787,11 +794,11 @@ void Plane::servos_twin_engine_mix(void)
 
             if (taxi_mode_switch > 1500){  // Taxi Mode
                 if (reverse_mode_switch > 1500){ // Taxi forward
-                    throttle_left  = constrain_float(throttle_rescaled + 50 * rudder_dt, -100, 100);
-                    throttle_right = constrain_float(throttle_rescaled - 50 * rudder_dt, -100, 100);
+                    throttle_left  = constrain_float(throttle_rescaled + 50 * rudder_dt_taxi, -100, 100);
+                    throttle_right = constrain_float(throttle_rescaled - 50 * rudder_dt_taxi, -100, 100);
                 } else { // Taxi backwards
-                    throttle_left  = constrain_float(-(throttle_rescaled + 50 * rudder_dt), -100, 100);
-                    throttle_right = constrain_float(-(throttle_rescaled - 50 * rudder_dt), -100, 100);
+                    throttle_left  = constrain_float(-(throttle_rescaled + 50 * rudder_dt_taxi), -100, 100);
+                    throttle_right = constrain_float(-(throttle_rescaled - 50 * rudder_dt_taxi), -100, 100);
                 }
             } else { // Flight Mode
                 throttle_left  = constrain_float(throttle_rescaled + 50 * rudder_dt, 0, 100);

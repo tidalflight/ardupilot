@@ -1272,6 +1272,15 @@ const AP_Param::GroupInfo ParametersG2::var_info[] = {
     // @Path: systemid.cpp
     AP_SUBGROUPINFO(systemid, "SID", 38, ParametersG2, AP_SystemID),
 #endif
+
+    // @Param: RUDD_DT_TAXI
+    // @DisplayName: rudder differential thrust gain in taxi mode
+    // @Description: gain control from rudder to differential thrust in taxi mode
+    // @Range: 0 100
+    // @Units: %
+    // @Increment: 1
+    // @User: Standard
+    AP_GROUPINFO("RUDD_DT_TAXI", 39, ParametersG2, rudd_dt_gain_taxi, 10),
     
     AP_GROUPEND
 };
