@@ -625,6 +625,7 @@ void Plane::set_throttle(void)
         // Apply min/max throttle limits
         const float limited_throttle = apply_throttle_limits(SRV_Channels::get_output_scaled(SRV_Channel::k_throttle));
         SRV_Channels::set_output_scaled(SRV_Channel::k_throttle, limited_throttle);
+        GCS_SEND_TEXT(MAV_SEVERITY_WARNING, "thr: %f", limited_throttle);
     }
 
     if (suppress_throttle()) {
@@ -810,7 +811,6 @@ void Plane::servos_twin_engine_mix(void)
         default: // All other modes
             throttle_left  = constrain_float(throttle + 50 * rudder_dt, 0, 100);
             throttle_right = constrain_float(throttle - 50 * rudder_dt, 0, 100);
-        
     }
     
     // // Original code
