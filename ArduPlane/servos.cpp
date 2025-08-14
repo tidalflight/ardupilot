@@ -625,7 +625,7 @@ void Plane::set_throttle(void)
         // Apply min/max throttle limits
         const float limited_throttle = apply_throttle_limits(SRV_Channels::get_output_scaled(SRV_Channel::k_throttle));
         SRV_Channels::set_output_scaled(SRV_Channel::k_throttle, limited_throttle);
-        GCS_SEND_TEXT(MAV_SEVERITY_WARNING, "thr: %f", limited_throttle);
+
     }
 
     if (suppress_throttle()) {
@@ -787,33 +787,22 @@ void Plane::servos_twin_engine_mix(void)
     // Determine left and right throttle values
     float throttle_left, throttle_right;
 
-    switch (control_mode->mode_number()) {
-        case Mode::Number::MANUAL:{ // Manual flight mode
-            float throttle_rescaled =  (throttle + 100) / 200 * 100; // rescale throttle from (-100,100) to (0,100) so stick at idle is 0 thrust.
-            float taxi_mode_switch = hal.rcin->read(5);
-            float reverse_mode_switch = hal.rcin->read(4);
-
-            if (taxi_mode_switch > 1500){  // Taxi Mode
-                if (reverse_mode_switch > 1500){ // Taxi forward
-                    throttle_left  = constrain_float(throttle_rescaled + 50 * rudder_dt_taxi, -100, 100);
-                    throttle_right = constrain_float(throttle_rescaled - 50 * rudder_dt_taxi, -100, 100);
-                } else { // Taxi backwards
-                    throttle_left  = constrain_float(-(throttle_rescaled + 50 * rudder_dt_taxi), -100, 100);
-                    throttle_right = constrain_float(-(throttle_rescaled - 50 * rudder_dt_taxi), -100, 100);
-                }
-            } else { // Flight Mode
-                throttle_left  = constrain_float(throttle_rescaled + 50 * rudder_dt, 0, 100);
-                throttle_right = constrain_float(throttle_rescaled - 50 * rudder_dt, 0, 100);
-            }
+    if (have_reverse_thrust() && allow_reverse_thrust()){
+        float taxi_mode_switch = hal.rcin->read(5);
+        if (taxi_mode_switch < 1500){  // Taxi Mode
+            throttle_left  = constrain_float(throttle + 50 * rudder_dt_taxi, -100, 100);
+            throttle_right = constrain_float(throttle - 50 * rudder_dt_taxi, -100, 100);
+        } else { // Flight mode
+            throttle_left  = constrain_float(abs(throttle) + 50 * rudder_dt, 0, 100);
+            throttle_right = constrain_float(abs(throttle) - 50 * rudder_dt, 0, 100);
         }
-        break;
 
-        default: // All other modes
-            throttle_left  = constrain_float(throttle + 50 * rudder_dt, 0, 100);
-            throttle_right = constrain_float(throttle - 50 * rudder_dt, 0, 100);
+    } else {
+        throttle_left  = constrain_float(throttle + 50 * rudder_dt, 0, 100);
+        throttle_right = constrain_float(throttle - 50 * rudder_dt, 0, 100);
     }
-    
-    // // Original code
+
+    // Original code
     // if (throttle < 0 && have_reverse_thrust() && allow_reverse_thrust()) {
     //     // doing reverse thrust
     //     throttle_left  = constrain_float(throttle + 50 * rudder_dt, -100, 0);
