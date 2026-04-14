@@ -788,10 +788,15 @@ void Plane::servos_twin_engine_mix(void)
     float throttle_left, throttle_right;
 
     if (have_reverse_thrust() && allow_reverse_thrust()){
-        float taxi_mode_switch = hal.rcin->read(5);
+        float taxi_mode_switch = hal.rcin->read(5); // note input is indexed from 0!
         if (taxi_mode_switch < 1500){  // Taxi Mode
-            throttle_left  = constrain_float(throttle + 50 * rudder_dt_taxi, -100, 100);
-            throttle_right = constrain_float(throttle - 50 * rudder_dt_taxi, -100, 100);
+            if (throttle < 0){ // doing reverse thrust
+                throttle_left  = constrain_float(throttle - 50 * rudder_dt_taxi, -100, 100);
+                throttle_right = constrain_float(throttle + 50 * rudder_dt_taxi, -100, 100);
+            } else{
+                throttle_left  = constrain_float(throttle + 50 * rudder_dt_taxi, -100, 100);
+                throttle_right = constrain_float(throttle - 50 * rudder_dt_taxi, -100, 100);
+            }
         } else { // Flight mode
             throttle_left  = constrain_float(abs(throttle) + 50 * rudder_dt, 0, 100);
             throttle_right = constrain_float(abs(throttle) - 50 * rudder_dt, 0, 100);
@@ -801,6 +806,7 @@ void Plane::servos_twin_engine_mix(void)
         throttle_left  = constrain_float(throttle + 50 * rudder_dt, 0, 100);
         throttle_right = constrain_float(throttle - 50 * rudder_dt, 0, 100);
     }
+    GCS_SEND_TEXT(MAV_SEVERITY_WARNING, "THR_L %.2f THR_R: %.2f", throttle_left, throttle_right);
 
     // Original code
     // if (throttle < 0 && have_reverse_thrust() && allow_reverse_thrust()) {
