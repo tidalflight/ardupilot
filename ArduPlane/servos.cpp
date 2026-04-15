@@ -806,7 +806,7 @@ void Plane::servos_twin_engine_mix(void)
         throttle_left  = constrain_float(throttle + 50 * rudder_dt, 0, 100);
         throttle_right = constrain_float(throttle - 50 * rudder_dt, 0, 100);
     }
-    GCS_SEND_TEXT(MAV_SEVERITY_WARNING, "THR_L %.2f THR_R: %.2f", throttle_left, throttle_right);
+    // GCS_SEND_TEXT(MAV_SEVERITY_WARNING, "THR_L %.2f THR_R: %.2f", throttle_left, throttle_right);
 
     // Original code
     // if (throttle < 0 && have_reverse_thrust() && allow_reverse_thrust()) {

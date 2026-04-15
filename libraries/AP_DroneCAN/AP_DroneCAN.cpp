@@ -731,7 +731,6 @@ int16_t AP_DroneCAN::scale_esc_output(uint8_t idx){
     } else {
         scaled = cmd_max * (scaled + 1.0) / 2.0;
     }
-
     return static_cast<int16_t>(scaled);
 }
 
